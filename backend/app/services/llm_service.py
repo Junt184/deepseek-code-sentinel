@@ -63,4 +63,29 @@ Code to Analyze:
                 "vulnerabilities": []
             }
 
+    async def analyze_code_stream(self, code: str, language: str) -> AsyncGenerator[str, None]:
+        """
+        Streaming analysis (yields chunks of JSON string)
+        """
+        try:
+            stream = await self.client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": "你是一名严谨的代码安全审计专家。必须输出 JSON 对象，且 description、suggestion、summary 使用中文。"},
+                    {"role": "user", "content": self._build_prompt(code, language)}
+                ],
+                temperature=0.1,
+                response_format={"type": "json_object"},
+                stream=True
+            )
+            
+            async for chunk in stream:
+                if chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
+                    
+        except Exception as e:
+            yield json.dumps({
+                "error": f"LLM Stream Failed: {str(e)}"
+            })
+
 llm_service = LLMService()

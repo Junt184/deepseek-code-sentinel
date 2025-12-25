@@ -2,11 +2,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1.api import api_router
+from app.middleware.security import SecurityMiddleware
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
+
+# Add Security Middleware (Global)
+app.add_middleware(SecurityMiddleware, max_content_length=1024 * 100) # 100KB Limit
 
 if settings.CORS_ORIGINS:
     app.add_middleware(
